@@ -18,39 +18,58 @@ namespace Search.Manager
 
         public async Task<List<SearchReadUsersDto>> GetUsersAsync(string keyword, string userEmail)
         {
+            var currentUser = (await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail))!;
 
-            var result = await (from user in _context.Set<User>()
+            var currentUserRequests = await (from user in _context.Set<User>()
+                                             join friendship in _context.Set<Friendship>()
+                                             on user.UserID equals friendship.FromUserID into grouping
+                                             where user.UserID == currentUser.UserID
+                                             from friendship in grouping.DefaultIfEmpty()
+                                             select new
+                                             {
+                                                 user,
+                                                 friendship
+                                             }).ToListAsync();
+
+
+
+            var searchMatches = await (from user in _context.Set<User>()
                                 join friendship in _context.Set<Friendship>()
                                 on user.UserID equals friendship.FromUserID into grouping
-                                from friendship in grouping.DefaultIfEmpty()
-                                
+                                where user.Email.Contains(keyword) || user.FirstName.Contains(keyword)
+                                from friendship in grouping.DefaultIfEmpty()                               
                                 select new {
                                     user,
                                     friendship
                                 }).ToListAsync();
 
-            var currentUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+
             // get friends
+            List<SearchReadUsersDto> friendsRequests = new List<SearchReadUsersDto>();
             List<SearchReadUsersDto> friends = new List<SearchReadUsersDto>();
             List<SearchReadUsersDto> requests = new List<SearchReadUsersDto>();
             List<SearchReadUsersDto> nonFriends = new List<SearchReadUsersDto>();
+       
 
-            var friendsAndRequests = result.Where(r => r.user.UserID == currentUser.UserID && (r.friendship?.FromUserID == currentUser.UserID || r.friendship?.ToUserID == currentUser.UserID))
-                     .Select(rQ =>
-                     {
-                         var u = result.FirstOrDefault(o => (o.user.UserID == rQ.friendship?.FromUserID &&  rQ.friendship?.FromUserID != rQ.user.UserID) || (o.user.UserID == rQ.friendship?.ToUserID && rQ.friendship?.ToUserID != rQ.user.UserID));
+            var matchesUsersIds = searchMatches.Select(fq => fq.user.UserID).Distinct().ToList();
 
-                             return new SearchReadUsersDto
-                             {
-                                 FriendshipId = rQ.friendship.FriendshipId,
-                                 Email = u.user.Email,
-                                 FirstName = u.user.FirstName,
-                                 Type = rQ.friendship!.Pending == false ? "Friend" : "Request"
-                             };
-                                           
-            }).ToList().Where(u => u != null).ToList();
+            currentUserRequests.ForEach(ur => {
+                var foundFriendRequestId = matchesUsersIds.FirstOrDefault(mu => mu == ur.friendship.ToUserID);
+                if (foundFriendRequestId > 0)
+                {
+                    var u = (searchMatches.FirstOrDefault(sm => sm.user.UserID == foundFriendRequestId))!;
+                    friendsRequests.Add(
+                        new SearchReadUsersDto
+                        {
+                            FriendshipId = ur.friendship.FriendshipId,
+                            Email = u.user.Email,
+                            FirstName = u.user.FirstName,
+                            Type = ur.friendship!.Pending == false ? "Friend" : "Request"
+                        });
+                }
+            });
 
-            friends = result.Where(r => r.user.UserID != currentUser.UserID && (r.friendship?.FromUserID == currentUser.UserID || r.friendship?.ToUserID == currentUser.UserID) && !r.friendship.Pending)
+            friends = searchMatches.Where(r => r.user.UserID != currentUser.UserID && (r.friendship?.ToUserID == currentUser.UserID) && !r.friendship.Pending)
 
                 .Select(nF => new SearchReadUsersDto
                 {
@@ -60,7 +79,7 @@ namespace Search.Manager
                     Type = "Friend"
                 }).ToList();
 
-            requests = result.Where(r => r.user.UserID != currentUser.UserID && (r.friendship?.ToUserID == currentUser.UserID) && r.friendship.Pending)
+            requests = searchMatches.Where(r => r.user.UserID != currentUser.UserID && (r.friendship?.ToUserID == currentUser.UserID) && r.friendship.Pending)
                 .Select(nF => new SearchReadUsersDto
                 {
                     FriendshipId = nF.friendship.FriendshipId,
@@ -69,9 +88,9 @@ namespace Search.Manager
                     Type = "Pending"
                 }).ToList();
 
-            nonFriends = result.Where(r => !friends.Exists(f => f.Email == r.user.Email) 
+            nonFriends = searchMatches.Where(r => !friends.Exists(f => f.Email == r.user.Email) 
                                            && !requests.Exists(rr => rr.Email == r.user.Email)
-                                           && !friendsAndRequests.Exists(fr => fr.Email == r.user.Email)
+                                           && !friendsRequests.Exists(fr => fr.Email == r.user.Email)
                                            && !nonFriends.Exists(n => n.Email == r.user.Email)
                                            && r.user.Email != currentUser.Email
                                            && r.friendship is not null)
@@ -84,11 +103,9 @@ namespace Search.Manager
                 }).ToList().DistinctBy(x => x.Email).ToList();
             
 
-            var finalResult = friendsAndRequests.Union(friends.Union(requests).Union(nonFriends).ToList()).ToList();
+            var finalsearchMatches = friendsRequests.Union(friends.Union(requests).Union(nonFriends).ToList()).ToList();
 
-            finalResult = finalResult.Where(r => r.Email.Contains(keyword)).ToList();
-
-            return finalResult;
+            return finalsearchMatches;
 
 
         }
