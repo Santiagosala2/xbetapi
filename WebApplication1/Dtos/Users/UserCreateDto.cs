@@ -2,7 +2,7 @@
 
 namespace Users.Dtos
 {
-    public class UserCreateDto
+    public class CreateBetDto
     {
         [Required]
         public string Email { get; set; } = null!;

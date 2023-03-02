@@ -15,6 +15,8 @@ using Wallet.Manager;
 using Search.Manager;
 using Search.Users.Dtos;
 using Friends.Dtos;
+using Bets.Models;
+using Bets.Manager;
 
 const string CookieScheme = "BetUserManager";
 
@@ -50,7 +52,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<IWalletManager, WalletManager>();
 builder.Services.AddScoped<ISearchManager, SearchManager>();
-
+builder.Services.AddScoped<IBetsManager, BetsManager>();
 
 var app = builder.Build();
 
@@ -106,7 +108,7 @@ app.MapPost("api/login", async  (HttpContext ctx, IUserManager userManager, IMap
 .WithName("Login");
 
 
-app.MapPost("api/register", async (HttpContext ctx, IUserManager userManager, IMapper mapper, [FromBody] UserCreateDto user) =>
+app.MapPost("api/register", async (HttpContext ctx, IUserManager userManager, IMapper mapper, [FromBody] CreateBetDto user) =>
 {
     // 1. Do validation
     // 2. Map payload from user to class model
@@ -221,6 +223,49 @@ app.MapPost("api/user/rejectRequest", async (HttpContext ctx, IUserManager userM
 })
 .WithName("RejectRequest")
 .RequireAuthorization();
+
+app.MapPost("api/user/createBet", async (HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper, [FromBody] Bet bet) =>
+{
+    var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
+    var betCreated = false;
+    var betCreatedId = 0;
+    if (userEmail != null)
+    {
+        var user = await userManager.GetUserAsync(userEmail);
+        if (user != null && user.UserID == bet.BetID)
+        {
+            (betCreated, betCreatedId) = await betManager.CreateBetAsync(bet);
+        }       
+    }
+
+    if (betCreated)
+    {
+        return Results.Created($"/user/bet/{betCreatedId}",bet);
+    }
+
+    return Results.BadRequest("Something went wrong");
+})
+.WithName("CreateBet")
+.RequireAuthorization();
+
+app.MapGet("api/user/bet/{id}", async (HttpContext ctx, [FromRoute] int betId , IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
+{
+    var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
+    if (userEmail != null)
+    {
+        var user = await userManager.GetUserAsync(userEmail);
+        if (user != null)
+        {
+          var bet = await betManager.GetBetAsync(betId, user.UserID);
+          if (bet != null) return Results.Ok(bet);
+          return Results.NotFound();
+        }     
+    }
+    return Results.BadRequest("Something went wrong");
+})
+.WithName("GetBet")
+.RequireAuthorization();
+
 
 app.Run();
 

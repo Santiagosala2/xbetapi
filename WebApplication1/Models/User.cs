@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Friends.Models;
+using Bets.Models;
 
 namespace Users.Models
 {
@@ -27,8 +28,13 @@ namespace Users.Models
 
         public virtual ICollection<Transaction> SystemTransactions { get; set; } = null!;
         public virtual ICollection<Transaction> UserTransactions { get; set; } = null!;
-
         public virtual ICollection<Friendship> FromUserFriendships { get; set; } = null!;
         public virtual ICollection<Friendship> ToUserFriendships { get; set; } = null!;
+
+        public virtual ICollection<Bet> UserBets { get; set; } = null!;
+        public virtual ICollection<Bet> FriendBets { get; set; } = null!;
+        public virtual ICollection<Bet> JudgeBets { get; set; } = null!;
+        public virtual ICollection<Bet> WinnerBets { get; set; } = null!;
+
     }
 }
