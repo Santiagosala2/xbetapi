@@ -70,10 +70,12 @@ namespace AuthServer.Migrations
                     b.Property<decimal>("Wager")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateTime>("When")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("When")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("WinnerID")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.HasKey("BetID");
@@ -214,7 +216,9 @@ namespace AuthServer.Migrations
 
                     b.HasOne("Users.Models.User", "Winner")
                         .WithMany("WinnerBets")
-                        .HasForeignKey("WinnerID");
+                        .HasForeignKey("WinnerID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Friend");
 

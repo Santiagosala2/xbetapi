@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using AuthServer.Helpers.Hasher;
 using Users.Models;
 using Bets.Models;
+using Bets.Dtos;
 
 namespace Bets.Manager
 {
@@ -15,11 +16,53 @@ namespace Bets.Manager
             _context = context;
         }
 
-        public async Task<(bool,int)> CreateBetAsync(Bet bet)
+        public async Task<(bool,int)> CreateBetAsync(CreateBetDto bet)
         {
-            await _context.Bets.AddAsync(bet);
-            int betSaved = await _context.SaveChangesAsync();
-            return (betSaved == 1,bet.BetID);
+            var user = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.UserEmail);
+            var friend = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.FriendEmail);
+            
+
+            if (user != null && friend != null)
+            {
+                Bet createBet = new Bet
+                {
+                    Type = bet.Type,
+                    Status = bet.Status,
+                    Wager = bet.Wager,
+                    When = bet.When,
+                    UserID = user.UserID,
+                    FriendID = friend.UserID
+  
+                };
+
+                if (createBet.Type == "weather")
+                {
+                    createBet.Location = bet.Location;
+                    createBet.Climate = bet.Climate;
+                }
+
+                if (createBet.Type == "manual" )
+                {
+                    var judge = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.JudgeEmail);
+                    if (judge != null)
+                    {
+                        createBet.JudgeID = judge.UserID;
+                        createBet.Name = bet.Name;
+                    } else
+                    {
+                        return (false, 0);
+                    }
+                    
+                }
+
+                await _context.Bets.AddAsync(createBet);
+                int betSaved = await _context.SaveChangesAsync();
+                return (betSaved == 1, createBet.BetID);
+
+            }
+
+            return (false, 0);
+            
 
         }
 

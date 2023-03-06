@@ -17,6 +17,7 @@ using Search.Users.Dtos;
 using Friends.Dtos;
 using Bets.Models;
 using Bets.Manager;
+using Bets.Dtos;
 
 const string CookieScheme = "BetUserManager";
 
@@ -224,7 +225,7 @@ app.MapPost("api/user/rejectRequest", async (HttpContext ctx, IUserManager userM
 .WithName("RejectRequest")
 .RequireAuthorization();
 
-app.MapPost("api/user/createBet", async (HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper, [FromBody] Bet bet) =>
+app.MapPost("api/user/bets", async (HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper, [FromBody] CreateBetDto bet) =>
 {
     var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
     var betCreated = false;
@@ -232,7 +233,7 @@ app.MapPost("api/user/createBet", async (HttpContext ctx, IUserManager userManag
     if (userEmail != null)
     {
         var user = await userManager.GetUserAsync(userEmail);
-        if (user != null && user.UserID == bet.BetID)
+        if (user != null )
         {
             (betCreated, betCreatedId) = await betManager.CreateBetAsync(bet);
         }       
@@ -248,7 +249,7 @@ app.MapPost("api/user/createBet", async (HttpContext ctx, IUserManager userManag
 .WithName("CreateBet")
 .RequireAuthorization();
 
-app.MapGet("api/user/bet/{id}", async (HttpContext ctx, [FromRoute] int betId , IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
+app.MapGet("api/user/bet/{id}", async (int betId, HttpContext ctx , IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
 {
     var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
     if (userEmail != null)

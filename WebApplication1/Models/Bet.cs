@@ -30,7 +30,7 @@ namespace Bets.Models
 
         public string FriendClimate { get; set; } = null!;
 
-        public DateTime When { get; set; }
+        public string When { get; set; } = null!;
         public DateTime Completition { get; set; }
 
         [Required]

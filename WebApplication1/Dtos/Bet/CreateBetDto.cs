@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Bets.Dtos
 {
-    public class CreateManualBetDto
+    public class CreateBetDto
     {
         [Required]
         public string Type { get; set; } = null!;
@@ -18,18 +18,20 @@ namespace Bets.Dtos
         [Required]
         public string Name { get; set; } = null!;
 
-       [Required]
-        public DateTime When { get; set; }
- 
         [Required]
-        public int UserID { get; set; }
+        public string When { get; set; } = null!;
+
+        public string Location { get; set; } = null!;
+        public string Climate { get; set; } = null!;
+
 
         [Required]
-        public int FriendID { get; set; }
-
+        public string UserEmail { get; set; } = null!;
         [Required]
-        public int JudgeID { get; set; }
+        public string FriendEmail { get; set; } = null!;
+        [Required]
+        public string JudgeEmail { get; set; } = null!;
 
-       
+
     }
 }

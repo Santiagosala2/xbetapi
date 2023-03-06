@@ -10,8 +10,8 @@ namespace Users.Profiles
         public UsersProfile()
         {
             //Source -> Target
-            CreateMap<CreateBetDto, User>();
-            CreateMap<User, CreateBetDto>();
+            CreateMap<UserCreateDto, User>();
+            CreateMap<User, UserCreateDto>();
             CreateMap<UserReadDto, User>();
             CreateMap<User, UserReadDto>();
             CreateMap<UserProfileDto, User>();
