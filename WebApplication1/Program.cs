@@ -18,6 +18,7 @@ using Friends.Dtos;
 using Bets.Models;
 using Bets.Manager;
 using Bets.Dtos;
+using System.Text.Json.Serialization;
 
 const string CookieScheme = "BetUserManager";
 
@@ -54,6 +55,11 @@ builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<IWalletManager, WalletManager>();
 builder.Services.AddScoped<ISearchManager, SearchManager>();
 builder.Services.AddScoped<IBetsManager, BetsManager>();
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 var app = builder.Build();
 
@@ -248,6 +254,33 @@ app.MapPost("api/user/bets", async (HttpContext ctx, IUserManager userManager, I
 })
 .WithName("CreateBet")
 .RequireAuthorization();
+
+app.MapGet("api/user/bets", async (HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
+{
+    var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
+    var getUserBets = new List<Bet>();
+    var awaitingUserBets = new List<Bet>();
+    if (userEmail != null)
+    {
+        var user = await userManager.GetUserAsync(userEmail);
+        if (user != null)
+        {
+             (getUserBets, awaitingUserBets) = await betManager.GetUserBetsAsync(user.UserID);
+              List<ReadBetDto> userBets = mapper.Map<List<ReadBetDto>>(getUserBets);
+              List<ReadBetDto> awaitingBets = mapper.Map<List<ReadBetDto>>(awaitingUserBets);
+            return Results.Ok(new
+            {
+                Pending = userBets,
+                Awaiting = awaitingBets
+            });
+        }
+    }
+
+    return Results.BadRequest("Something went wrong");
+})
+.WithName("GetBets")
+.RequireAuthorization();
+
 
 app.MapGet("api/user/bet/{id}", async (int betId, HttpContext ctx , IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
 {

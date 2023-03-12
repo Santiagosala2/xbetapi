@@ -16,11 +16,11 @@ namespace Bets.Manager
             _context = context;
         }
 
-        public async Task<(bool,int)> CreateBetAsync(CreateBetDto bet)
+        public async Task<(bool, int)> CreateBetAsync(CreateBetDto bet)
         {
             var user = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.UserEmail);
             var friend = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.FriendEmail);
-            
+
 
             if (user != null && friend != null)
             {
@@ -29,10 +29,10 @@ namespace Bets.Manager
                     Type = bet.Type,
                     Status = bet.Status,
                     Wager = bet.Wager,
-                    When = bet.When,
+                    When = DateTime.Parse(bet.When),
                     UserID = user.UserID,
                     FriendID = friend.UserID
-  
+
                 };
 
                 if (createBet.Type == "weather")
@@ -41,7 +41,7 @@ namespace Bets.Manager
                     createBet.Climate = bet.Climate;
                 }
 
-                if (createBet.Type == "manual" )
+                if (createBet.Type == "manual")
                 {
                     var judge = await _context.Users.FirstOrDefaultAsync(user => user.Email == bet.JudgeEmail);
                     if (judge != null)
@@ -52,7 +52,7 @@ namespace Bets.Manager
                     {
                         return (false, 0);
                     }
-                    
+
                 }
 
                 await _context.Bets.AddAsync(createBet);
@@ -62,7 +62,15 @@ namespace Bets.Manager
             }
 
             return (false, 0);
-            
+
+
+        }
+        public async Task<(List<Bet>,List<Bet>)> GetUserBetsAsync( int userId)
+        {
+            var getUserBets = await _context.Bets.Where(b => b.UserID == userId && b.Status == "Pending").ToListAsync();
+            var awaitingUserBets = await _context.Bets.Where(b => b.FriendID == userId && b.Status == "Pending").ToListAsync();
+
+            return (getUserBets,awaitingUserBets); 
 
         }
 

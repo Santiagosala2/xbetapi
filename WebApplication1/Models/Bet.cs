@@ -22,16 +22,17 @@ namespace Bets.Models
         [Range(1, Double.PositiveInfinity, ErrorMessage = "The wager amount must be greater than 1")]
         public decimal Wager { get; set; }
 
-        public string Name { get; set; } = null!;
+        public string? Name { get; set; }
 
-        public string Location { get; set; } = null!;
+        public string? Location { get; set; }
 
-        public string Climate { get; set; } = null!;
+        public string? Climate { get; set; } 
 
-        public string FriendClimate { get; set; } = null!;
+        public string? FriendClimate { get; set; }
 
-        public string When { get; set; } = null!;
-        public DateTime Completition { get; set; }
+        public DateTime When { get; set; }
+
+        public DateTime? Completition { get; set; }
 
         [Required]
         public int UserID { get; set; }
@@ -45,8 +46,8 @@ namespace Bets.Models
 
         public virtual User User { get; set; } = null!;
         public virtual User Friend { get; set; } = null!;
-        public virtual User Judge { get; set; } = null!;
-        public virtual User Winner { get; set; } = null!;
+        public virtual User? Judge { get; set; } 
+        public virtual User? Winner { get; set; } 
 
     }
 }

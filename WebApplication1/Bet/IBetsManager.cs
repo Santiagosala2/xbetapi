@@ -9,5 +9,7 @@ namespace Bets.Manager
     {
         Task<(bool, int)> CreateBetAsync(CreateBetDto bet);
         Task<Bet?> GetBetAsync(int betId, int userId);
+
+        Task<(List<Bet>, List<Bet>)> GetUserBetsAsync(int userId);
     }
 }

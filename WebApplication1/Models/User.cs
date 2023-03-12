@@ -33,8 +33,8 @@ namespace Users.Models
 
         public virtual ICollection<Bet> UserBets { get; set; } = null!;
         public virtual ICollection<Bet> FriendBets { get; set; } = null!;
-        public virtual ICollection<Bet> JudgeBets { get; set; } = null!;
-        public virtual ICollection<Bet> WinnerBets { get; set; } = null!;
+        public virtual ICollection<Bet>? JudgeBets { get; set; } 
+        public virtual ICollection<Bet>? WinnerBets { get; set; } 
 
     }
 }
