@@ -11,7 +11,9 @@ namespace Bets.Profiles
             //Source -> Target
             CreateMap<CreateBetDto, Bet>();
             CreateMap<Bet, CreateBetDto>();
-            CreateMap<Bet, ReadBetDto>();
+            CreateMap<Bet, ReadBetDto>()
+                .ForMember(r => r.FriendName , opt => opt.MapFrom(b => b.Friend.FirstName))
+                .ForMember(r => r.JudgeName, opt => opt.MapFrom(b => b.Judge != null ? b.Judge.FirstName : null));
             CreateMap<ReadBetDto, Bet>();
         }
     }

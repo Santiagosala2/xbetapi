@@ -14,6 +14,8 @@
         public DateTime When { get; set; } 
         public DateTime Completition { get; set; }
 
+        public string? FriendName { get; set; } 
+        public string? JudgeName { get; set; }
         public int UserID { get; set; }
 
         public int FriendID { get; set; }

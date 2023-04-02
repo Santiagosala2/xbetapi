@@ -115,7 +115,7 @@ app.MapPost("api/login", async  (HttpContext ctx, IUserManager userManager, IMap
 .WithName("Login");
 
 
-app.MapPost("api/register", async (HttpContext ctx, IUserManager userManager, IMapper mapper, [FromBody] CreateBetDto user) =>
+app.MapPost("api/register", async (HttpContext ctx, IUserManager userManager, IMapper mapper, [FromBody] UserCreateDto user) =>
 {
     // 1. Do validation
     // 2. Map payload from user to class model
@@ -298,6 +298,44 @@ app.MapGet("api/user/bet/{id}", async (int betId, HttpContext ctx , IUserManager
     return Results.BadRequest("Something went wrong");
 })
 .WithName("GetBet")
+.RequireAuthorization();
+
+app.MapPost("api/user/bet/{id}/accept", async (string id, HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper, [FromBody] AnswerClimateBetDto answer ) =>
+{
+    var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
+    if (userEmail != null)
+    {
+        var user = await userManager.GetUserAsync(userEmail);
+        if (user != null)
+        {
+            int betIdInt = Int32.Parse(id);
+            var updateBet = await betManager.AcceptBetAsync(betIdInt, user.UserID , answer.FriendClimate);
+            if (updateBet) return Results.Ok(updateBet);
+            return Results.NotFound();
+        }
+    }
+    return Results.BadRequest("Something went wrong");
+})
+.WithName("AcceptBet")
+.RequireAuthorization();
+
+app.MapPost("api/user/bet/{id}/reject", async (string id, HttpContext ctx, IUserManager userManager, IBetsManager betManager, IMapper mapper) =>
+{
+    var userEmail = ctx.User.FindFirst(ClaimTypes.Name)?.Value;
+    if (userEmail != null)
+    {
+        var user = await userManager.GetUserAsync(userEmail);
+        if (user != null)
+        {
+            int betIdInt = Int32.Parse(id);
+            var updateBet = await betManager.RejectBetAsync(betIdInt);
+            if (updateBet) return Results.Ok(updateBet);
+            return Results.NotFound();
+        }
+    }
+    return Results.BadRequest("Something went wrong");
+})
+.WithName("RejectBet")
 .RequireAuthorization();
 
 

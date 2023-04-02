@@ -11,5 +11,9 @@ namespace Bets.Manager
         Task<Bet?> GetBetAsync(int betId, int userId);
 
         Task<(List<Bet>, List<Bet>)> GetUserBetsAsync(int userId);
+
+        Task<bool> AcceptBetAsync(int betId, int friendId, string climateAnswer);
+
+        Task<bool> RejectBetAsync(int betId);
     }
 }

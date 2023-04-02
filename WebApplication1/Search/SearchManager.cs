@@ -54,7 +54,7 @@ namespace Search.Manager
             var matchesUsersIds = searchMatches.Select(fq => fq.user.UserID).Distinct().ToList();
 
             currentUserRequests.ForEach(ur => {
-                var foundFriendRequestId = matchesUsersIds.FirstOrDefault(mu => mu == ur.friendship.ToUserID);
+                var foundFriendRequestId = matchesUsersIds.FirstOrDefault(mu => mu == ur.friendship?.ToUserID);
                 if (foundFriendRequestId > 0)
                 {
                     var u = (searchMatches.FirstOrDefault(sm => sm.user.UserID == foundFriendRequestId))!;
