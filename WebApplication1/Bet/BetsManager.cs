@@ -76,33 +76,49 @@ namespace Bets.Manager
                                 join judge in _context.Set<User>()
                                 on bet.JudgeID equals judge.UserID into grouping2
                                 from judge in grouping2.DefaultIfEmpty()
-                                where (bet.UserID == userId && bet.Status == "Pending") || (bet.Status == "Pending - Ready")
-                                select new
+                                where bet.UserID == userId && EF.Functions.Like(bet.Status,"%Pending%")
+                                     select new
                                 {
                                     bet,
                                     friend,
                                     judge
                                 }).ToListAsync();
 
+            var involvedGetUserBets = await (from bet in _context.Set<Bet>()
+                                             join friend in _context.Set<User>()
+                                             on bet.UserID equals friend.UserID into grouping
+                                             from friend in grouping.DefaultIfEmpty()
+                                             where (bet.Status == "Pending - Ready" &&  bet.FriendID == userId)
+                                             select new
+                                             {
+                                                 bet,
+                                                 friend
+                                             }).ToListAsync();
+
             var awaitingUserBets = await (from bet in _context.Set<Bet>()
-                                          join friend in _context.Set<User>()
-                                          on bet.FriendID equals friend.UserID into grouping
-                                          from friend in grouping.DefaultIfEmpty()
+                                          join user in _context.Set<User>()
+                                          on bet.UserID equals user.UserID into grouping
+                                          from user in grouping.DefaultIfEmpty()
                                           join judge in _context.Set<User>()
                                           on bet.JudgeID equals judge.UserID into grouping2
                                           from judge in grouping2.DefaultIfEmpty()
                                           where bet.FriendID == userId && bet.Status == "Pending"
                                           select new
                                           {
-                                              bet,
-                                              friend
+                                              bet
                                           }).ToListAsync();
 
-            var resultGetUserBets = getUserBets.Select(b => b.bet).ToList();
+            var resultGetUserBets = getUserBets.Select(b => b.bet).ToList().Concat(involvedGetUserBets.Select(b => {
+                            b.bet.Status += "*";
+                            var friendClimate = b.bet.FriendClimate;
+                            b.bet.FriendClimate = b.bet.Climate;
+                            b.bet.Climate = friendClimate;
+                             return b.bet; }
+            )).ToList();
 
-           // var getUserBets = await _context.Bets.Where(b => b.UserID == userId && b.Status == "Pending").ToListAsync();
+            // var getUserBets = await _context.Bets.Where(b => b.UserID == userId && b.Status == "Pending").ToListAsync();
 
-            var resultAwaitingUserBets = awaitingUserBets.Select(b => b.bet).ToList();
+            var resultAwaitingUserBets = awaitingUserBets.Select(b => { b.bet.Status = "Awaiting"; return b.bet; }).ToList();
 
             return (resultGetUserBets, resultAwaitingUserBets); 
 

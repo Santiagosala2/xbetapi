@@ -12,7 +12,7 @@ namespace Bets.Profiles
             CreateMap<CreateBetDto, Bet>();
             CreateMap<Bet, CreateBetDto>();
             CreateMap<Bet, ReadBetDto>()
-                .ForMember(r => r.FriendName , opt => opt.MapFrom(b => b.Friend.FirstName))
+                .ForMember(r =>  r.FriendName , opt => opt.MapFrom(b => b.Status.Contains("*") || b.Status == "Awaiting" ? b.User.FirstName: b.Friend.FirstName))
                 .ForMember(r => r.JudgeName, opt => opt.MapFrom(b => b.Judge != null ? b.Judge.FirstName : null));
             CreateMap<ReadBetDto, Bet>();
         }
